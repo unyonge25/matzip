@@ -6,8 +6,8 @@ import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// 토큰 발급
-const createToken = (user) =>
+// 토큰 발급 (마이페이지에서 닉네임을 바꾸면 새 토큰을 발급하기 위해 export)
+export const createToken = (user) =>
   jwt.sign(
     { id: user.id, email: user.email, nickname: user.nickname },
     process.env.JWT_SECRET,
@@ -16,10 +16,15 @@ const createToken = (user) =>
 
 // 회원가입 : POST /api/auth/register
 router.post('/register', async (req, res) => {
-  const { email, password, nickname } = req.body;
+  const { email, password } = req.body;
+  const nickname = req.body.nickname?.trim();
 
   if (!email || !password || !nickname) {
     return res.status(400).json({ message: '모든 항목을 입력해주세요.' });
+  }
+  // DB 컬럼 길이에 맞춰 검사
+  if (email.length > 100 || nickname.length > 30) {
+    return res.status(400).json({ message: '이메일은 100자, 닉네임은 30자까지 입력할 수 있습니다.' });
   }
 
   try {
@@ -47,6 +52,10 @@ router.post('/register', async (req, res) => {
 // 로그인 : POST /api/auth/login
 router.post('/login', async (req, res) => {
   const { email, password } = req.body;
+
+  if (!email || !password) {
+    return res.status(400).json({ message: '이메일과 비밀번호를 입력해주세요.' });
+  }
 
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);

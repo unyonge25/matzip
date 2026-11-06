@@ -41,8 +41,8 @@ function Register() {
   return (
     <Form onSubmit={handleSubmit}>
       <h2>회원가입</h2>
-      <input name="email" type="email" placeholder="이메일" value={form.email} onChange={handleChange} required />
-      <input name="nickname" placeholder="닉네임" value={form.nickname} onChange={handleChange} required />
+      <input name="email" type="email" placeholder="이메일" value={form.email} onChange={handleChange} maxLength={100} required />
+      <input name="nickname" placeholder="닉네임" value={form.nickname} onChange={handleChange} maxLength={30} required />
       <input name="password" type="password" placeholder="비밀번호" value={form.password} onChange={handleChange} required />
       <input name="passwordCheck" type="password" placeholder="비밀번호 확인" value={form.passwordCheck} onChange={handleChange} required />
       {error && <ErrorText>{error}</ErrorText>}

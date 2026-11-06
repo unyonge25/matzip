@@ -29,8 +29,10 @@ const Logo = styled(Link)`
 
 const Nav = styled.nav`
   display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
   align-items: center;
-  gap: 16px;
+  gap: 4px 16px;
   font-size: 15px;
 
   button {
@@ -55,9 +57,11 @@ function Header() {
           학교앞 맛집
         </Logo>
         <Nav>
+          <Link to="/status">맛집 등록 현황</Link>
+          <Link to="/reviews">리뷰 모아보기</Link>
           {user ? (
             <>
-              <span>{user.nickname}님</span>
+              <Link to="/mypage">{user.nickname}님</Link>
               <button onClick={handleLogout}>로그아웃</button>
             </>
           ) : (
