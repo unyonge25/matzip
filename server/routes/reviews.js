@@ -5,6 +5,13 @@ import { verifyToken } from '../middleware/auth.js';
 // mergeParams : 주소의 :restaurantId 값을 이 라우터에서도 사용
 const router = express.Router({ mergeParams: true });
 
+// 입력값 검사 (문제가 있으면 오류 메시지 반환)
+const validate = (rating, content) => {
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) return '별점은 1~5점 중에서 선택해주세요.';
+  if (!content) return '리뷰 내용을 입력해주세요.';
+  return null;
+};
+
 // 리뷰 목록 : GET /api/restaurants/:restaurantId/reviews
 router.get('/', async (req, res) => {
   try {
@@ -29,11 +36,9 @@ router.post('/', verifyToken, async (req, res) => {
   const rating = Number(req.body.rating);
   const content = req.body.content?.trim();
 
-  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
-    return res.status(400).json({ message: '별점은 1~5점 중에서 선택해주세요.' });
-  }
-  if (!content) {
-    return res.status(400).json({ message: '리뷰 내용을 입력해주세요.' });
+  const invalid = validate(rating, content);
+  if (invalid) {
+    return res.status(400).json({ message: invalid });
   }
 
   try {
@@ -47,6 +52,40 @@ router.post('/', verifyToken, async (req, res) => {
       [restaurantId, req.user.id, rating, content]
     );
     res.status(201).json({ message: '리뷰가 등록되었습니다.' });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 리뷰 수정 : PUT /api/restaurants/:restaurantId/reviews/:reviewId (작성한 본인만)
+router.put('/:reviewId', verifyToken, async (req, res) => {
+  const rating = Number(req.body.rating);
+  const content = req.body.content?.trim();
+
+  const invalid = validate(rating, content);
+  if (invalid) {
+    return res.status(400).json({ message: invalid });
+  }
+
+  try {
+    const [rows] = await pool.query(
+      'SELECT user_id FROM reviews WHERE id = ? AND restaurant_id = ?',
+      [req.params.reviewId, req.params.restaurantId]
+    );
+    if (rows.length === 0) {
+      return res.status(404).json({ message: '리뷰를 찾을 수 없습니다.' });
+    }
+    if (rows[0].user_id !== req.user.id) {
+      return res.status(403).json({ message: '본인이 작성한 리뷰만 수정할 수 있습니다.' });
+    }
+
+    await pool.query('UPDATE reviews SET rating = ?, content = ? WHERE id = ?', [
+      rating,
+      content,
+      req.params.reviewId,
+    ]);
+    res.json({ message: '리뷰가 수정되었습니다.' });
   } catch (error) {
     console.error(error);
     res.status(500).json({ message: '서버 오류가 발생했습니다.' });

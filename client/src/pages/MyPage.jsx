@@ -130,28 +130,32 @@ function MyPage() {
   const [profile, setProfile] = useState(null)
   const [myRestaurants, setMyRestaurants] = useState([])
   const [myReviews, setMyReviews] = useState([])
+  const [myLikes, setMyLikes] = useState([])
+  const [loadError, setLoadError] = useState('')
 
   const [editForm, setEditForm] = useState({ nickname: user?.nickname || '', currentPassword: '', newPassword: '' })
   const [editError, setEditError] = useState('')
   const [deletePassword, setDeletePassword] = useState('')
   const [deleteError, setDeleteError] = useState('')
 
-  // 프로필, 내 맛집, 내 리뷰를 함께 불러옴
+  // 프로필, 내 맛집, 내 리뷰, 찜한 맛집을 함께 불러옴
+  // (토큰이 만료된 경우의 로그아웃 처리는 api/axios.js에서 함)
   useEffect(() => {
     if (!user) return
-    Promise.all([api.get('/users/me'), api.get('/users/me/restaurants'), api.get('/users/me/reviews')])
-      .then(([profileRes, restaurantsRes, reviewsRes]) => {
+    Promise.all([
+      api.get('/users/me'),
+      api.get('/users/me/restaurants'),
+      api.get('/users/me/reviews'),
+      api.get('/users/me/likes'),
+    ])
+      .then(([profileRes, restaurantsRes, reviewsRes, likesRes]) => {
         setProfile(profileRes.data)
         setMyRestaurants(restaurantsRes.data)
         setMyReviews(reviewsRes.data)
+        setMyLikes(likesRes.data)
       })
-      .catch(() => {
-        // 토큰이 만료됐거나 회원 정보가 없으면 다시 로그인
-        alert('로그인 정보가 만료되었습니다. 다시 로그인해주세요.')
-        logout()
-        navigate('/login')
-      })
-  }, [user, logout, navigate])
+      .catch(() => setLoadError('정보를 불러오지 못했습니다. 잠시 후 다시 시도해주세요.'))
+  }, [user])
 
   if (!user) return <Navigate to="/login" replace />
 
@@ -187,6 +191,7 @@ function MyPage() {
     }
   }
 
+  if (loadError) return <ErrorText>{loadError}</ErrorText>
   if (!profile) return <p>불러오는 중...</p>
 
   return (
@@ -251,6 +256,19 @@ function MyPage() {
         ) : (
           <Grid>
             {myRestaurants.map((r) => (
+              <RestaurantCard key={r.id} restaurant={r} />
+            ))}
+          </Grid>
+        )}
+      </section>
+
+      <section>
+        <h2>내가 찜한 맛집 {myLikes.length}</h2>
+        {myLikes.length === 0 ? (
+          <Empty>아직 찜한 맛집이 없어요.</Empty>
+        ) : (
+          <Grid>
+            {myLikes.map((r) => (
               <RestaurantCard key={r.id} restaurant={r} />
             ))}
           </Grid>

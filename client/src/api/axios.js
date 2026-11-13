@@ -14,4 +14,19 @@ api.interceptors.request.use((config) => {
   return config
 })
 
+// 토큰이 만료됐거나 탈퇴한 계정이면 로그인 정보를 지우고 로그인 페이지로 이동
+// (토큰이 남아 있을 때만 처리해서, 요청 여러 개가 동시에 실패해도 안내는 한 번만 띄움)
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.data?.code === 'INVALID_TOKEN' && localStorage.getItem('token')) {
+      localStorage.removeItem('token')
+      localStorage.removeItem('user')
+      alert(error.response.data.message)
+      window.location.href = '/login'
+    }
+    return Promise.reject(error)
+  }
+)
+
 export default api

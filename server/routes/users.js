@@ -40,6 +40,9 @@ router.put('/me', async (req, res) => {
   if (!nickname) {
     return res.status(400).json({ message: '닉네임을 입력해주세요.' });
   }
+  if (nickname.length > 30) {
+    return res.status(400).json({ message: '닉네임은 30자까지 입력할 수 있습니다.' });
+  }
 
   try {
     const [rows] = await pool.query('SELECT * FROM users WHERE id = ?', [req.user.id]);
@@ -120,6 +123,26 @@ router.get('/me/restaurants', async (req, res) => {
        WHERE r.user_id = ?
        GROUP BY r.id
        ORDER BY r.created_at DESC`,
+      [req.user.id]
+    );
+    res.json(rows);
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: '서버 오류가 발생했습니다.' });
+  }
+});
+
+// 내가 찜한 맛집 (likes + restaurants JOIN) : GET /api/users/me/likes
+router.get('/me/likes', async (req, res) => {
+  try {
+    const [rows] = await pool.query(
+      `SELECT r.*, ROUND(AVG(v.rating), 1) AS avg_rating, COUNT(v.id) AS review_count
+       FROM likes l
+       JOIN restaurants r ON l.restaurant_id = r.id
+       LEFT JOIN reviews v ON v.restaurant_id = r.id
+       WHERE l.user_id = ?
+       GROUP BY r.id, l.created_at
+       ORDER BY l.created_at DESC`,
       [req.user.id]
     );
     res.json(rows);

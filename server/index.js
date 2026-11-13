@@ -7,6 +7,7 @@ import './db.js'; // 서버 시작 시 DB 연결 확인
 import authRoutes from './routes/auth.js';
 import restaurantRoutes from './routes/restaurants.js';
 import reviewRoutes from './routes/reviews.js';
+import likeRoutes from './routes/likes.js';
 import userRoutes from './routes/users.js';
 import allReviewRoutes from './routes/allReviews.js';
 import restaurantStatusRoutes from './routes/restaurantStatus.js';
@@ -33,6 +34,7 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads'))); // 업로�
 app.use('/api/auth', authRoutes);
 app.use('/api/restaurants', restaurantRoutes);
 app.use('/api/restaurants/:restaurantId/reviews', reviewRoutes);
+app.use('/api/restaurants/:restaurantId/like', likeRoutes);
 app.use('/api/users', userRoutes); // 마이페이지 (프로필 조회/수정, 회원 탈퇴)
 app.use('/api/reviews', allReviewRoutes); // 리뷰 모아보기 (reviews + users + restaurants JOIN)
 app.use('/api/restaurant-status', restaurantStatusRoutes); // 맛집 등록 현황 (restaurants + users JOIN)

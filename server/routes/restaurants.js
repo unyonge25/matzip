@@ -7,11 +7,12 @@ const router = express.Router();
 
 const CATEGORIES = ['한식', '중식', '일식', '양식', '분식', '카페', '기타'];
 
-// 맛집 정보 + 등록자 닉네임 + 평균 별점 + 리뷰 수
+// 맛집 정보 + 등록자 닉네임 + 평균 별점 + 리뷰 수 + 찜 수
 const SELECT_RESTAURANT = `
   SELECT r.*, u.nickname,
          ROUND(AVG(v.rating), 1) AS avg_rating,
-         COUNT(v.id) AS review_count
+         COUNT(v.id) AS review_count,
+         (SELECT COUNT(*) FROM likes l WHERE l.restaurant_id = r.id) AS like_count
   FROM restaurants r
   JOIN users u ON r.user_id = u.id
   LEFT JOIN reviews v ON v.restaurant_id = r.id
